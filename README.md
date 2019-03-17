@@ -1,8 +1,9 @@
 # TailorMade
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/tailor_made`. To experiment with that code, run `bin/console` for an interactive prompt.
+Currently in development.
 
-TODO: Delete this and the text above, and describe your gem
+Gem to query and plot grouped data. Makes it easy for people without sql knowledge to explore data.
+Uses active record.
 
 ## Installation
 
