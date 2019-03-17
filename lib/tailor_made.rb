@@ -1,4 +1,7 @@
 require "tailor_made/version"
+
+require "groupdate/group_alias"
+
 require "tailor_made/group_alias"
 require "tailor_made/relation_alias"
 require "tailor_made/methods"
