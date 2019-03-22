@@ -48,37 +48,44 @@ Then you can add the following statments to your query `rails_root/app/queries/t
 
 
 ```ruby
-  datetime_dimension :started_at, permit: [:day, :day_of_week, :day_of_month, :week, :month_of_year]
-  dimension(
-    :device_type,
-    domain: -> { self.all.pluck("DISTINCT device_type") }
-  )
-  dimension :referring_domain
-  dimension :utm_campaign
-  dimension :utm_content
-  dimension :utm_medium
-  dimension :utm_source
-  dimension :utm_term
-  measure :users_count, formula: "COUNT(user_id)"
-  measure :visits_count, formula: "COUNT(id)"
+  module TailorMade
+    class Ahoy::VisitQuery < TailorMade::Query
+      # creates attr_accessors for dimensions, measures and filters
+      include TailorMade::Methods
 
-  def default_dimensions
-    [:device_type]
+      datetime_dimension :started_at, permit: [:day, :day_of_week, :day_of_month, :week, :month_of_year]
+      dimension(
+        :device_type,
+        domain: -> { Ahoy::Visits.all.pluck("DISTINCT device_type") }
+      )
+      dimension :referring_domain
+      dimension :utm_campaign
+      dimension :utm_content
+      dimension :utm_medium
+      dimension :utm_source
+      dimension :utm_term
+      measure :users_count, formula: "COUNT(user_id)"
+      measure :visits_count, formula: "COUNT(id)"
+
+      def default_dimensions
+        [:device_type]
+      end
+
+      def default_measures
+        [:visits_count, :users_count]
+      end
+
+      def initialize(attributes={})
+        super
+        @started_at_starts_at ||= Date.today.beginning_of_month
+        @started_at_ends_at   ||= Date.today
+      end
+
+      def from
+        ::Ahoy::Visit.all
+      end
+    end
   end
-
-  def default_measures
-    [:visits_count, :users_count]
-  end
-
-  def initialize(attributes={})
-    super
-    @started_at_starts_at ||= Date.today.beginning_of_month
-    @started_at_ends_at   ||= Date.today
-  end
-
-  def from
-    ::Ahoy::Visit.all
-end
 ```
 
 Visit `http://localhost:3000/tailor_made/ahoy/visits`.
