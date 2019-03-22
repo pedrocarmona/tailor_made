@@ -1,0 +1,22 @@
+module <%= namespace.classify %>
+  class <%= class_name.pluralize %>Controller < ApplicationController
+    include Pagy::Backend
+
+    before_action :set_query
+
+    def index
+      @pagy, @records = pagy(@query.all)
+    end
+
+    private
+
+    def set_query
+      @query = <%= class_name %>Query.new(query_params[:<%= class_name.demodulize.parameterize %>_query])
+    end
+
+    def query_params
+      return {} if params[:q].nil?
+      params[:q].permit(TailorMade::Ahoy::VisitQuery.permitted_attributes)
+    end
+  end
+end

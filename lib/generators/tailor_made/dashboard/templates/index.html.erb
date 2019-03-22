@@ -1,0 +1,158 @@
+<div class="row col-md-12 mr-sm-auto col-lg-12 pt-5">
+  <main role="main" class="col-md-9 mr-sm-auto col-lg-10 px-4">
+    <%#= pie_chart @query.plot %>
+    <%= send(@query.chart, @query.plot) %>
+
+    <div class="row justify-content-center border-bottom">
+      <h4 class="h4 text-center"><%= @query.plot_measure.to_s.titleize %></h4>
+    </div>
+
+    <div class="table-responsive mt-4">
+      <table class="table table-striped table-sm">
+        <thead>
+          <tr>
+            <% @query.table_columns.each do |column| %>
+              <th><%= column %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @records.each do |row| %>
+            <tr>
+              <% @query.table_columns.each do |column| %>
+                <% cell = @query.tabelize(row, column) %>
+                <th>
+                  <% if cell.is_a?(Array) %>
+                    <%= link_to(cell[0], cell[1]) %>
+                  <% else %>
+                    <%= cell %>
+                  <% end %>
+                </th>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= pagy_bootstrap_nav(@pagy).html_safe %>
+  </main>
+
+  <nav class="col-md-3 col-lg-2 ml-sm-auto d-md-block bg-light sidebar">
+    <div class="sidebar-sticky">
+      <h4 class="mb-3 pt-3">Filters</h4>
+      <%= form_for(@query, as: :q, url: url_for(only_path: true), method: :get) do |f| %>
+       <div class="form-group">
+          <%= f.label :chart %>
+          <%=
+            f.select(
+              :chart,
+              options_for_select(
+                @query.options_for_select[:chart],
+                @query.chart
+              ),
+              {},
+              { :class => 'selectize', :onchange => 'if(this.value.length>0)this.form.submit();' }
+            )
+          %>
+        </div>
+        <div class="form-group">
+          <%= f.label :plot_measure %>
+          <%=
+            f.select(
+              :plot_measure,
+              options_for_select(
+                @query.options_for_select[:plot_measure],
+                @query.plot_measure
+              ),
+              {},
+              { :class => 'selectize', :onchange => 'if(this.value.length>0)this.form.submit();' }
+            )
+          %>
+        </div>
+        <hr class="mb-4">
+        <% @query.class.tailor_made_canonical_dimensions.each do |dimension| %>
+          <div class="form-group">
+            <%= f.label "#{dimension}".to_sym %>
+            <% if @query.options_for_select["#{dimension}".to_sym].nil? %>
+              <%= f.text_field "#{dimension}".to_sym, class: "form-control", :value => @query.send("#{dimension}".to_sym).try(:iso8601) %>
+            <% else %>
+              <%=
+                f.select(
+                  :host,
+                  options_for_select(@query.options_for_select["#{dimension}".to_sym], @query.send("#{dimension}".to_sym)),
+                  { include_blank: true },
+                  { :class => 'selectize' }
+                )
+              %>
+            <% end %>
+          </div>
+        <% end %>
+
+        <% @query.class.tailor_made_datetime_columns.each do |dimension| %>
+          <div class="form-group">
+            <%= f.label "#{dimension}_starts_at".to_sym, class: "label-control" %>
+            <%= f.text_field "#{dimension}_starts_at".to_sym, class: "form-control datepicker", :value => @query.send("#{dimension}_starts_at".to_sym).try(:iso8601), "data-date-locale" => "#{I18n.locale}" %>
+          </div>
+          <div class="form-group">
+            <%= f.label "#{dimension}_ends_at".to_sym, class: "label-control" %>
+            <%= f.text_field "#{dimension}_ends_at".to_sym, class: "form-control datepicker", :value => @query.send("#{dimension}_ends_at".to_sym).try(:iso8601), "data-date-locale" => "#{I18n.locale}" %>
+          </div>
+        <% end %>
+
+        <div class="form-group">
+          <%= f.label :dimensions %>
+          <%=
+            f.select(
+              :dimensions,
+              options_for_select(@query.options_for_select[:dimensions], nil),
+              {},
+              { :multiple => true, :class => 'custom-selectize' }
+            )
+          %>
+        </div>
+        <div class="form-group">
+          <%= f.label :measures %>
+          <%=
+            f.select(
+              :measures,
+              options_for_select(@query.options_for_select[:measures], nil),
+              {},
+              { :multiple => true, :class => 'custom-selectize' }
+            )
+          %>
+        </div>
+        <hr class="mb-4">
+        <div class="form-group">
+          <%= f.submit 'Search', class: "btn btn-primary btn-lg btn-block" %>
+        </div>
+      <% end %>
+    </div>
+  </nav>
+</div>
+
+<script type="text/javascript">
+  document.addEventListener('turbolinks:load', function() {
+    <% @query.class.tailor_made_datetime_columns.each do |dimension| %>
+      flatpickr("#q_<%= dimension.to_s %>_starts_at", {
+        enableTime: false,
+        "plugins": [
+          new rangePlugin({ input: "#q_<%= dimension.to_s %>_ends_at" })
+        ]
+      });
+    <% end %>
+
+    $('.selectize').selectize({
+      create: true
+    });
+
+    $('#q_dimensions').selectize({
+      create: true,
+      items: <%= @query.dimensions.to_json.html_safe %>
+    });
+
+    $('#q_measures').selectize({
+      create: true,
+      items: <%= @query.measures.to_json.html_safe %>
+    });
+  })
+</script>
