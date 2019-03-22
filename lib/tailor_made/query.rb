@@ -1,7 +1,6 @@
 module TailorMade
   class Query
     include ActiveModel::Model
-    include TailorMade::Methods # creates accesors for dimensions and measures
 
     attr_accessor :measures
     attr_accessor :dimensions
@@ -30,7 +29,6 @@ module TailorMade
       @plot_measure   ||= measures.first
 
       set_datetime_ranges
-      @scope = build_scope(from, dimensions)
     end
 
     def from
@@ -38,7 +36,21 @@ module TailorMade
     end
 
     def options_for_select
-      fail(NotImplementedError) # required in beta version
+      @options_for_select ||= begin
+        options = {
+          domain: self.class.tailor_made_canonical_dimensions + self.class.tailor_made_datetime_dimensions.values().flatten,
+          dimensions: self.class.tailor_made_canonical_dimensions + self.class.tailor_made_datetime_dimensions.values().flatten,
+          measures: self.class.tailor_made_measures,
+          plot_measure: self.class.tailor_made_measures,
+          chart: CHARTS
+        }
+        self.class.tailor_made_canonical_domain.each do |field|
+          if self.class.tailor_made_canonical_domain[field]
+            options = options.merge({ field => self.class.tailor_made_canonical_domain[field].call })
+          end
+        end
+        options
+      end
     end
 
     def chart
@@ -46,6 +58,7 @@ module TailorMade
     end
 
     def plot
+      scope = build_scope(from, dimensions)
       result = scope.order(order).pluck(plot_formulas(dimensions, scope))
       return result if dimensions.size < 2
       result.map { |row| row[1...-1] }.uniq.map { |combination|
@@ -72,6 +85,7 @@ module TailorMade
     end
 
     def all
+      @scope = build_scope(from, dimensions)
       scope.order(order).select(table_formulas)
     end
 
@@ -84,16 +98,14 @@ module TailorMade
       end
     end
 
-
-
     def tabelize(row, column)
-      if CANONICAL_ANCHORS[column].nil?
+      if self.class.tailor_made_canonical_anchors[column].nil?
         row.send(column)
       else
-        if CANONICAL_ANCHORS[column].respond_to? :call
-          CANONICAL_ANCHORS[column] = CANONICAL_ANCHORS[column].call
+        if self.class.tailor_made_canonical_anchors[column].respond_to? :call
+          self.class.tailor_made_canonical_anchors[column] = self.class.tailor_made_canonical_anchors[column].call
         end
-        result = CANONICAL_ANCHORS[column][row.send(column)]
+        result = self.class.tailor_made_canonical_anchors[column][row.send(column)]
         result = [row.send(column), result] if result
         result ||= row.send(column)
       end
@@ -106,7 +118,7 @@ module TailorMade
 
       scope = build_datetime_dimensions_scope(scope, dimensions)
 
-      datetime_dimensions = DATETIME_DIMENSIONS.values().flatten
+      datetime_dimensions = self.class.tailor_made_datetime_dimensions.values().flatten
       unless (dimensions - datetime_dimensions).empty?
         scope = scope.group(dimensions - datetime_dimensions)
       end
@@ -114,8 +126,13 @@ module TailorMade
     end
 
     def build_canonical_scope(scope)
-      CANONICAL_DIMENSIONS.each do |dimension|
-        scope = scope.where('#{dimension} LIKE ?', "%#{send(dimension)}%") if send(dimension).present?
+      self.class.tailor_made_canonical_dimensions.each do |dimension|
+        next if send(dimension).nil?
+        scope = scope.where(
+          ':dimension LIKE :pattern',
+          dimension: dimension,
+          pattern: "%#{send(dimension)}%"
+        )
       end
       scope
     end
@@ -123,7 +140,7 @@ module TailorMade
     # Datetime
 
     def build_datetime_dimensions_scope(scope, dimensions)
-      DATETIME_COLUMNS.each do |dimension|
+      self.class.tailor_made_datetime_columns.each do |dimension|
         scope = build_datetime_dimension_scope(scope, dimension, dimensions)
       end
       scope
@@ -132,7 +149,7 @@ module TailorMade
     def build_datetime_dimension_scope(scope, dimension, dimensions)
       starts_at = instance_variable_get("@#{dimension}_starts_at")
       ends_at = instance_variable_get("@#{dimension}_ends_at")
-      permit = TAILOR_MADE_MEASURES_DATETIME_PERMITED[dimension]
+      permit = self.class.tailor_made_measures_datetime_permited[dimension]
 
       if !starts_at.blank? && !ends_at.blank?
         scope = scope.where(dimension.to_sym => starts_at..ends_at)
@@ -147,7 +164,7 @@ module TailorMade
 
     def datetime_dimension_periods(datetime_dimension, dimensions)
       dimensions.select { |dimension|
-        DATETIME_DIMENSIONS[datetime_dimension].include?(dimension)
+        self.class.tailor_made_datetime_dimensions[datetime_dimension].include?(dimension)
       }
     end
 
@@ -156,7 +173,7 @@ module TailorMade
     end
 
     def set_datetime_ranges
-      DATETIME_COLUMNS.each do |dimension|
+      self.class.tailor_made_datetime_columns.each do |dimension|
         set_datetime_range(dimension)
       end
     end
@@ -311,7 +328,7 @@ module TailorMade
 
     def measure_formulas(measures)
       measures.map { |measure|
-        [TAILOR_MADE_MEASURE_FORMULA[measure], measure].join(" AS ")
+        [self.class.tailor_made_measure_formula[measure], measure].join(" AS ")
       }
     end
 

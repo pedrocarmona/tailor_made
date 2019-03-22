@@ -1,42 +1,44 @@
 module TailorMade
   module Methods
     def self.included(base) # :nodoc:
-      const_set('CANONICAL_DIMENSIONS', [])
-      const_set('CANONICAL_DOMAIN', {})
-      const_set('CANONICAL_ANCHORS', {})
-      const_set('TAILOR_MADE_MEASURES', [])
-      const_set('TAILOR_MADE_MEASURE_FORMULA', {})
-      const_set('DATETIME_COLUMNS', [])
-      const_set('DATETIME_DIMENSIONS', {})
-      const_set('TAILOR_MADE_MEASURES_DATETIME_PERMITED', {})
       base.extend ClassMethods
     end
 
     module ClassMethods
       def dimension(*attributes)
         dimension = attributes[0]
-        return if CANONICAL_DIMENSIONS.include?(dimension)
-        CANONICAL_DIMENSIONS << dimension
+        return if tailor_made_canonical_dimensions.include?(dimension)
+        tailor_made_canonical_dimensions << dimension
 
         attr_accessor dimension
-        CANONICAL_DOMAIN[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
-        CANONICAL_ANCHORS[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
+        tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
+        tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
+      end
+
+      def filter(*attributes)
+        filter = attributes[0]
+        return if tailor_made_filters.include?(filter)
+        TAILOR_MADE_FILTERS << filter
+
+        attr_accessor filter
+        tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
+        tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
       end
 
       def measure(*attributes)
         measure = attributes[0]
-        return if TAILOR_MADE_MEASURES.include?(measure)
-        TAILOR_MADE_MEASURES << measure
+        return if tailor_made_measures.include?(measure)
+        tailor_made_measures << measure
 
         if attributes[1] && attributes[1][:formula]
-          TAILOR_MADE_MEASURE_FORMULA[measure] = attributes[1][:formula]
+          tailor_made_measure_formula[measure] = attributes[1][:formula]
         end
       end
 
       def datetime_dimension(*attributes)
         dimension = attributes[0]
-        return if DATETIME_COLUMNS.include?(dimension)
-        DATETIME_COLUMNS << dimension
+        return if tailor_made_datetime_columns.include?(dimension)
+        tailor_made_datetime_columns << dimension
         attr_accessor "#{dimension.to_s}_starts_at".to_sym
         attr_accessor "#{dimension.to_s}_ends_at".to_sym
 
@@ -46,12 +48,62 @@ module TailorMade
           permit = Groupdate::PERIODS
         end
 
-        TAILOR_MADE_MEASURES_DATETIME_PERMITED[dimension] = permit
+        tailor_made_measures_datetime_permited[dimension] = permit
 
-        DATETIME_DIMENSIONS[dimension] = permit.map do |period|
+        tailor_made_datetime_dimensions[dimension] = permit.map do |period|
           [dimension, period].join("_").to_sym
         end
         # groups (day, month, year..)
+      end
+
+      def permitted_attributes
+        [
+          :chart,
+          :plot_measure,
+          measures: [],
+          dimensions: []
+        ] +
+        tailor_made_datetime_columns.map { |a| "#{a.to_s}_starts_at".to_sym } +
+        tailor_made_datetime_columns.map { |a| "#{a.to_s}_ends_at".to_sym } +
+        tailor_made_canonical_dimensions +
+        tailor_made_filters
+
+      end
+
+      def tailor_made_canonical_dimensions
+        @tailor_made_canonical_dimensions ||= []
+      end
+
+      def tailor_made_canonical_domain
+        @tailor_made_canonical_domain ||= {}
+      end
+
+      def tailor_made_canonical_anchors
+        @tailor_made_canonical_anchors ||= {}
+      end
+
+      def tailor_made_measures
+        @tailor_made_measures ||= []
+      end
+
+      def tailor_made_measure_formula
+        @tailor_made_measure_formula ||= {}
+      end
+
+      def tailor_made_datetime_columns
+        @tailor_made_datetime_columns ||= []
+      end
+
+      def tailor_made_datetime_dimensions
+        @tailor_made_datetime_dimensions ||= {}
+      end
+
+      def tailor_made_measures_datetime_permited
+        @tailor_made_measures_datetime_permited ||= {}
+      end
+
+      def tailor_made_filters
+        @tailor_made_filters ||= []
       end
     end
   end
