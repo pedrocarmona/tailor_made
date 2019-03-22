@@ -2,8 +2,24 @@
 
 Currently in development.
 
-Gem to query and plot grouped data. Makes it easy for people without sql knowledge to explore data.
-Uses active record.
+Business intelligence for humans. This gem allows to create dashboards, based on query objects and plot one measure of the grouped data. Makes it easy for people without sql knowledge to explore data. Uses active record.
+
+You will:
+
+  - Build and edit reports in minutes ([view usage](#usage))
+
+You should:
+
+  - Build reports on top of materialized views for performance
+  - Create a dedicated rails app for analytics (blazer, tailor_made, smashing, scenic).
+  - Test your dashboards data, for visibility when they start failing
+
+You could:
+
+  - And custom external data for correlation (advertising campaign spent, etc)
+  - Add input tables - pull data to input tables, or let it be pushed
+  - Join data in a materialized view in scenic. Refresh daily
+
 
 ## Installation
 
@@ -23,14 +39,57 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Create your first dashboard:
 
-## Development
+    $ bin/rails g tailor_made:dashboard Ahoy::Visit
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Then you can add the following statments to your query `rails_root/app/queries/tailor_made/ahoy/visit_query.rb`:
+
+
+```ruby
+  datetime_dimension :started_at, permit: [:day, :day_of_week, :day_of_month, :week, :month_of_year]
+  dimension(
+    :device_type,
+    domain: -> { self.all.pluck("DISTINCT device_type") }
+  )
+  dimension :referring_domain
+  dimension :utm_campaign
+  dimension :utm_content
+  dimension :utm_medium
+  dimension :utm_source
+  dimension :utm_term
+  measure :users_count, formula: "COUNT(user_id)"
+  measure :visits_count, formula: "COUNT(id)"
+
+  def default_dimensions
+    [:device_type]
+  end
+
+  def default_measures
+    [:visits_count, :users_count]
+  end
+
+  def initialize(attributes={})
+    super
+    @started_at_starts_at ||= Date.today.beginning_of_month
+    @started_at_ends_at   ||= Date.today
+  end
+
+  def from
+    ::Ahoy::Visit.all
+end
+```
+
+Visit `http://localhost:3000/tailor_made/ahoy/visits`.
+
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/tailor_made.
+Bug reports and pull requests are welcome on GitHub at https://github.com/pedrocarmona/tailor_made.
+
+## TODO:
+
+- [ ] fix plot group by (n+1 queries not required).
+- [ ] plot and selectize in different request (caching, etc)
+- [ ] show row with totals (unique dimensions, sum without grouping)
