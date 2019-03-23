@@ -37,6 +37,59 @@ Or install it yourself as:
 
     $ gem install tailor_made
 
+Add pagy in app/helpers/application_helper.rb
+
+```ruby
+module ApplicationHelper
+  include Pagy::Frontend
+```
+
+Two ways:
+
+1. Add assets gems:
+
+```ruby
+# gem "selectize-rails" # and follow its instruction
+# gem "chartkick" # and follow its instruction
+# gem "flatpickr" # include also rangePlugin
+```
+Then you need to add statments to application.scss.
+
+Otherwise:
+
+2. Webpacker packages
+
+```
+  $ yarn add chartkick chart.js flatpickr selectize
+```
+
+2. Webpacker: /app/javascript/packs/application.js
+
+```js
+// tailor_made
+import jquery from 'jquery'
+import Chartkick from 'chartkick'
+import Chart from 'chart.js'
+import 'flatpickr'
+import rangePlugin from 'flatpickr/dist/plugins/rangePlugin'
+import "flatpickr/dist/flatpickr.css";
+import 'selectize'
+import "selectize/dist/css/selectize.css";
+import "selectize/dist/css/selectize.bootstrap3.css";
+Chartkick.addAdapter(Chart)
+window.Chartkick = Chartkick
+window.rangePlugin = rangePlugin
+window.jquery = jquery
+window.$ = jquery
+```
+
+2. Webpack: /app/assets/stylesheets/application.scss
+
+```scss
+@import "flatpickr/dist/flatpickr.css";
+@import "selectize/dist/css/selectize.css";
+@import "selectize/dist/css/selectize.bootstrap3.css";
+```
 ## Usage
 
 Create your first dashboard:
