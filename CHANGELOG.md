@@ -1,3 +1,5 @@
+## TailorMade 0.2.0 (March 23, 2019) ##
+
 *   Add generators.
 
     For example:
@@ -17,6 +19,6 @@
     *Pedro Carmona*
 
 
-## TailorMade 0.0.1 (March 17, 2019) ##
+## TailorMade 0.1.0 (March 17, 2019) ##
 
 *   Initial source code
