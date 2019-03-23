@@ -20,6 +20,7 @@ You could:
   - Add input tables - pull data to input tables, or let it be pushed
   - Join data in a materialized view in scenic. Refresh daily
 
+![Screenshot 2019-03-23 at 14 56 05](https://user-images.githubusercontent.com/2815199/54867179-876f9b80-4d7d-11e9-8c71-208df1aa8c0d.png)
 
 ## Installation
 
