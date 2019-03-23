@@ -158,3 +158,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/pedroc
 - [ ] fix plot group by (n+1 queries not required).
 - [ ] plot and selectize in different request (caching, etc)
 - [ ] show row with totals (unique dimensions, sum without grouping)
+- [ ] remove monkeypatch groupdate
