@@ -11,12 +11,12 @@ module <%= namespace.classify %>
     private
 
     def set_query
-      @query = <%= class_name %>Query.new(query_params[:<%= class_name.demodulize.parameterize %>_query])
+      @query = <%= namespace.classify %>::<%= class_name %>Query.new(query_params)
     end
 
     def query_params
       return {} if params[:q].nil?
-      params[:q].permit(TailorMade::Ahoy::VisitQuery.permitted_attributes)
+      params[:q].permit(<%= namespace.classify %>::<%= class_name %>Query.permitted_attributes)
     end
   end
 end
