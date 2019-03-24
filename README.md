@@ -4,8 +4,9 @@ Currently in development.
 
 Business intelligence for humans. This gem allows to create dashboards, based on query objects and plot one measure of the grouped data. Makes it easy for people without sql knowledge to explore data. Uses active record.
 
-It uses metaprogramming to allow developers to easily build dashboards. The main raison is because data users usually require the data as soon as possible, building dashboards should be fast, and also, if developers control the queries, it makes it simpler no maintain. 
-
+It uses metaprogramming to allow developers to easily build dashboards. The main reasons:
+- Data users usually require the data as soon as possible, building dashboards should be fast;
+- Developers control the which data users can query, it makes it simpler no maintain. 
 
 ![Screenshot 2019-03-23 at 14 56 05](https://user-images.githubusercontent.com/2815199/54867179-876f9b80-4d7d-11e9-8c71-208df1aa8c0d.png)
 
