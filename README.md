@@ -4,22 +4,7 @@ Currently in development.
 
 Business intelligence for humans. This gem allows to create dashboards, based on query objects and plot one measure of the grouped data. Makes it easy for people without sql knowledge to explore data. Uses active record.
 
-You will:
-
-  - Build and edit reports in minutes ([view usage](#usage))
-
-You should:
-
-  - Build reports on top of materialized views for performance
-  - Create a dedicated rails app for analytics (blazer, tailor_made, smashing, scenic).
-  - Test your dashboards data, for visibility when they start failing
-
-You could:
-
-  - And custom external data for correlation (advertising campaign spent, etc)
-  - Add input tables - pull data to input tables, or let it be pushed
-  - Join data in a materialized view in scenic. Refresh daily
-
+It uses metaprogramming to allow developers to easily build dashboards. The main raison is because data users usually require the data as soon as possible, building dashboards should be fast, and also, if developers control the queries, it makes it simpler no maintain. 
 
 
 ![Screenshot 2019-03-23 at 14 56 05](https://user-images.githubusercontent.com/2815199/54867179-876f9b80-4d7d-11e9-8c71-208df1aa8c0d.png)
@@ -148,6 +133,11 @@ Then you can add the following statments to your query `rails_root/app/queries/t
 
 Visit `http://localhost:3000/tailor_made/ahoy/visits`.
 
+## Credits
+
+This project is a remake from a project developed by [@archan937](https://github.com/archan937), I am glad I could see it running. Since I saw Paul's project, I have tried to replicate it in another tools, but the in the end, there was always something missing. I really like the ideia to allow users to build dinamic queries without need of sql or excel skills.
+
+Also, thank you [Andrew](https://github.com/ankane) for building Blazer, Groupdate and Chartkick.
 
 ## Contributing
 
