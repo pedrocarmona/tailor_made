@@ -6,7 +6,7 @@ Business intelligence for humans. This gem allows to create dashboards, based on
 
 It uses metaprogramming to allow developers to easily build dashboards. The main reasons:
 - Data users usually require the data as soon as possible, building dashboards should be fast;
-- Developers control the which data users can query, it makes it simpler no maintain. 
+- Developers can control access to data, decide which columns can be used - it makes it simpler to maintain the dashboards because its easier to detect when those columns are removed.
 
 ![Screenshot 2019-03-23 at 14 56 05](https://user-images.githubusercontent.com/2815199/54867179-876f9b80-4d7d-11e9-8c71-208df1aa8c0d.png)
 
