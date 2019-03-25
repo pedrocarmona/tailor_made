@@ -87,8 +87,11 @@ Create your first dashboard:
 
     $ bin/rails g tailor_made:dashboard Ahoy::Visit
 
+The "DSL" to create dashboards is defined in a query object. There are dimensions (columns that can be grouped and filtered) and there are measures (columns where we aply a mathematical formula - sum, count, avg, etc). You need to specify the default dimensions and measures and also the from method is an active record relation - the rails model which we are querying.
 
-Then you can add the following statments to your query `rails_root/app/queries/tailor_made/ahoy/visit_query.rb`:
+In this example you can see that there are 2 types of dimensions: `dimension` and `datetime_dimension` - the form will create specific fields for datetime, and also several filters: `started_at_day`, `started_at_day``started_at_week`, etc.
+
+Then you can add the following statements to your query `rails_root/app/queries/tailor_made/ahoy/visit_query.rb`:
 
 
 ```ruby
