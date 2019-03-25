@@ -139,7 +139,7 @@ Visit `http://localhost:3000/tailor_made/ahoy/visits`.
 
 ## Credits
 
-This project is a remake from a project developed by [@archan937](https://github.com/archan937), I am glad I could see it running. Since I saw Paul's project, I have tried to replicate it in another tools, but the in the end, there was always something missing. I really like the ideia to allow users to build dinamic queries without need of sql or excel skills.
+This project is a remake from a project developed by [@archan937](https://github.com/archan937), I am glad I could see it running. Since I saw Paul's project, I have tried to replicate it in another tools, but the in the end, there was always something missing. I really like the idea to allow users to build dynamic queries without need of sql or excel skills.
 
 Also, thank you [Andrew](https://github.com/ankane) for building Blazer, Groupdate and Chartkick.
 
