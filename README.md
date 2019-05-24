@@ -143,6 +143,10 @@ This project is a remake from a project developed by [@archan937](https://github
 
 Also, thank you [Andrew](https://github.com/ankane) for building Blazer, Groupdate and Chartkick.
 
+## Similar Projects
+
+- [datagrid](https://github.com/bogdan/datagrid)
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/pedrocarmona/tailor_made.
