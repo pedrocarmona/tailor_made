@@ -18,10 +18,10 @@ module Groupdate
     end
 
     def generate
-      clause = group_clause
+      clause = Arel.sql(group_clause)
       clause.extend(::Groupdate::GroupAlias)
+      clause.alias = @alias_name
       clause.relation = @relation.arel_table
-      clause.name = @alias_name
       @relation.group(clause).where(*where_clause)
     end
 
@@ -185,7 +185,12 @@ module Groupdate
     def resolve_column(relation, column)
       node = relation.send(:relation).send(:arel_columns, [column]).first
       node = Arel::Nodes::SqlLiteral.new(node) if node.is_a?(String)
-      relation.connection.visitor.accept(node, Arel::Collectors::SQLString.new).value
+      Arel.sql(
+        relation.connection.visitor.accept(
+          node,
+          Arel::Collectors::SQLString.new
+        ).value
+      )
     end
   end
 end
