@@ -8,13 +8,13 @@ module Groupdate
 
     def as(other)
       Arel::Nodes::As.new(
-        Arel.sql(to_str),
+        Arel.sql(sql),
         Arel::Nodes::SqlLiteral.new(other)
       )
     end
 
     def sql
-      to_sym.to_s
+      to_str
     end
 
     def to_s
