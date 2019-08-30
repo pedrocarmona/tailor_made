@@ -7,8 +7,6 @@ require 'pagy/extras/bootstrap'
 require_relative "./groupdate/group_alias" # mockey patch
 require_relative "./groupdate/relation_builder" # mockey patch
 
-require "tailor_made/group_alias"
-require "tailor_made/relation_alias"
 require "tailor_made/methods"
 require "tailor_made/query"
 
