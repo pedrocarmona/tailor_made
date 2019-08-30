@@ -13,6 +13,7 @@ module TailorMade
         attr_accessor dimension
         tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
         tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
+        tailor_made_canonical_graph_format[dimension] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
       end
 
       def filter(*attributes)
@@ -30,9 +31,9 @@ module TailorMade
         return if tailor_made_measures.include?(measure)
         tailor_made_measures << measure
 
-        if attributes[1] && attributes[1][:formula]
-          tailor_made_measure_formula[measure] = attributes[1][:formula]
-        end
+        tailor_made_measure_formula[measure] = attributes[1][:formula] if attributes[1] && attributes[1][:formula]
+        tailor_made_canonical_format[measure] = attributes[1][:format] if attributes[1] && attributes[1][:format]
+        tailor_made_canonical_graph_format[measure] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
       end
 
       def datetime_dimension(*attributes)
@@ -53,7 +54,49 @@ module TailorMade
         tailor_made_datetime_dimensions[dimension] = permit.map do |period|
           [dimension, period].join("_").to_sym
         end
+
+        add_datetime_dimension_formats(dimension, permit)
         # groups (day, month, year..)
+      end
+
+      def add_datetime_dimension_formats(dimension, permitted)
+        permitted.each do |period|
+          dimension_period = [dimension, period].join("_").to_sym
+          tailor_made_canonical_format[dimension_period] = datetime_format(period.to_sym)
+        end
+      end
+
+      def datetime_format(period)
+        case period
+        when :second
+          -> (view_context, time) { time.to_formatted_s(:db) }
+        when :minute
+          -> (view_context, time) { time.to_formatted_s(:db) }
+        when :hour
+          -> (view_context, time) { time.to_formatted_s(:db) }
+        when :day
+          -> (view_context, time) { time.to_date.to_formatted_s(:db) }
+        when :week
+          -> (view_context, time) { time }
+        when :month
+          -> (view_context, time) { time }
+        when :quarter
+          -> (view_context, time) { time }
+        when :year
+          -> (view_context, time) { time }
+        when :day_of_week
+          -> (view_context, time) { time }
+        when :hour_of_day
+          -> (view_context, time) { time }
+        when :minute_of_hour
+          -> (view_context, time) { time }
+        when :day_of_month
+          -> (view_context, time) { time }
+        when :month_of_year
+          -> (view_context, time) { time }
+        else
+          nil
+        end
       end
 
       def permitted_attributes
@@ -80,6 +123,14 @@ module TailorMade
 
       def tailor_made_canonical_anchors
         @tailor_made_canonical_anchors ||= {}
+      end
+
+      def tailor_made_canonical_format
+        @tailor_made_canonical_format ||= {}
+      end
+
+      def tailor_made_canonical_graph_format
+        @tailor_made_canonical_graph_format ||= {}
       end
 
       def tailor_made_measures

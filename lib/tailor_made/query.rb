@@ -57,19 +57,26 @@ module TailorMade
       @chart ||= :pie_chart
     end
 
-    def plot
+    def plot(view_context)
       scope = build_scope(from, dimensions)
-      result = scope.order(order).pluck(plot_formulas(dimensions, scope))
+      raw_result = scope.order(order).pluck(plot_formulas(dimensions, scope))
+      columns = plot_header(dimensions, scope)
+      result = raw_result.map { |raw_row|
+        row = Struct.new(*columns).new(*raw_row)
+        columns.map { |column|
+          graph_format(row, column) { |l| l.call(view_context, row.send(column)) }
+        }
+      }
       return result if dimensions.size < 2
       result.map { |row| row[1...-1] }.uniq.map { |combination|
         {
           name: combination.join("#"),
-          data: combination_data(dimension_groups_sorted(dimensions, scope), combination)
+          data: combination_data(dimension_groups_sorted(dimensions, scope), combination, view_context)
         }
       }
     end
 
-    def combination_data(groups, combination)
+    def combination_data(groups, combination, view_context)
       # combination.each_with_index.map { |param, index| [groups[index + 1].to_sym , param] }
       scope = from
       combination.each_with_index.each { |param, index|
@@ -77,11 +84,20 @@ module TailorMade
       }
       plot_dimension = groups[0]
       scope = build_scope(scope, [plot_dimension])
-      scope.order(
+      raw_result = scope.order(
         { dimension_alias(plot_dimension, scope).to_sym => :asc }
       ).pluck(
         plot_formulas([plot_dimension], scope)
       )
+      comb_dimensions = dimensions.dup
+      comb_dimensions.pop
+      columns = plot_header(comb_dimensions, scope)
+      result = raw_result.map { |raw_row|
+        row = Struct.new(*columns).new(*raw_row)
+        columns.map { |column|
+          graph_format(row, column) { |l| l.call(view_context, row.send(column)) }
+        }
+      }
     end
 
     def all
@@ -98,17 +114,36 @@ module TailorMade
       end
     end
 
-    def tabelize(row, column)
-      if self.class.tailor_made_canonical_anchors[column].nil?
-        row.send(column)
-      else
-        if self.class.tailor_made_canonical_anchors[column].respond_to? :call
-          self.class.tailor_made_canonical_anchors[column] = self.class.tailor_made_canonical_anchors[column].call
-        end
-        result = self.class.tailor_made_canonical_anchors[column][row.send(column)]
-        result = [row.send(column), result] if result
-        result ||= row.send(column)
+    def graph_format(row, column)
+      only_column = column.to_s.gsub([self.from.arel_table.name, "_"].join(""), "").to_sym
+      if !(self.class.tailor_made_canonical_graph_format[column].nil?)
+        lambding = self.class.tailor_made_canonical_graph_format[column]
+        result = yield(lambding)
+      elsif !(self.class.tailor_made_canonical_graph_format[only_column].nil?)
+        lambding = self.class.tailor_made_canonical_graph_format[only_column]
+        result = yield(lambding)
       end
+      result || row.send(column)
+    end
+
+    def tabelize(row, column)
+      only_column = column.to_s.gsub([self.from.arel_table.name, "_"].join(""), "").to_sym
+      if !(self.class.tailor_made_canonical_anchors[column].nil?)
+        if self.class.tailor_made_canonical_anchors[column].respond_to? :call
+          lambding = self.class.tailor_made_canonical_anchors[column]
+          result = yield(lambding)
+        else
+          lambding = ->(value) { self.class.tailor_made_canonical_anchors[column][value] }
+          result = yield(lambding)
+        end
+      elsif !(self.class.tailor_made_canonical_format[column].nil?)
+        lambding = self.class.tailor_made_canonical_format[column]
+        result = yield(lambding)
+      elsif !(self.class.tailor_made_canonical_format[only_column].nil?)
+        lambding = self.class.tailor_made_canonical_format[only_column]
+        result = yield(lambding)
+      end
+      result || row.send(column)
     end
 
     private
@@ -314,6 +349,10 @@ module TailorMade
       dimensions.map do |dimension|
         find_group(dimension, scope.group_values)
       end
+    end
+
+    def plot_header(dimensions, scope)
+      dimensions + [plot_measure.to_sym]
     end
 
     def plot_formulas(dimensions, scope)
