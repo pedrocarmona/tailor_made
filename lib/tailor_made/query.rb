@@ -7,8 +7,11 @@ module TailorMade
     attr_accessor :dimensions
     attr_accessor :plot_measure
     attr_accessor :chart
+    attr_accessor :sort_column
+    attr_accessor :sort_direction
     attr_reader :options_for_select
-    attr_reader :scope
+    attr_reader :sort_column
+    attr_reader :sort_direction
 
     CHARTS = [
       :pie_chart,
@@ -30,6 +33,12 @@ module TailorMade
       @plot_measure   ||= measures.first
 
       set_datetime_ranges
+    end
+
+    def self.column_names
+      (tailor_made_measures.compact || []) +
+      (tailor_made_canonical_dimensions.compact || []) +
+      (tailor_made_datetime_dimensions.values().flatten.compact || [])
     end
 
     def from
@@ -105,8 +114,9 @@ module TailorMade
 
 
     def all
-      @scope = build_scope(from, dimensions)
-      scope.order(order).select(table_formulas)
+      scope = build_scope(from, dimensions)
+      scope = scope.order(order)
+      scope.select(table_formulas(scope))
     end
 
     def table_columns
@@ -143,6 +153,20 @@ module TailorMade
         result = yield(lambding)
       end
       result || row.send(column)
+    end
+
+    def to_params
+      array = [
+          :chart,
+          :plot_measure,
+          :measures,
+          :dimensions
+        ] +
+        self.class.tailor_made_datetime_columns.map { |a| "#{a.to_s}_starts_at".to_sym } +
+        self.class.tailor_made_datetime_columns.map { |a| "#{a.to_s}_ends_at".to_sym } +
+        self.class.tailor_made_canonical_dimensions +
+        self.class.tailor_made_filters
+      Hash[array.uniq.map {|key| [key, send(key)]}].compact
     end
 
     private
@@ -188,7 +212,8 @@ module TailorMade
     # Order and selects
 
     def order(custom_order = nil)
-      custom_order || @order || { @dimensions.first => :asc }
+      parse_order
+      { @sort_column => @sort_direction }
     end
 
     def dimensions_formulas(scope, dimensions)
@@ -213,7 +238,7 @@ module TailorMade
       (dimensions_formulas(scope, dimensions) + measure_formulas([plot_measure.to_sym]))
     end
 
-    def table_formulas
+    def table_formulas(scope)
       (dimensions_formulas(scope, dimensions) + measure_formulas(measures))
     end
 
@@ -239,6 +264,15 @@ module TailorMade
 
     def avaliable_datetime_dimensions
       self.class.tailor_made_datetime_dimensions.values().flatten
+    end
+
+    def parse_order
+      if @sort_column && self.class.column_names.include?(sort_column.to_sym)
+        @sort_direction = %w[asc desc].include?(sort_direction) ? sort_direction : :asc
+      else
+        @sort_column = @dimensions.first
+        @sort_direction = :asc
+      end
     end
   end
 end

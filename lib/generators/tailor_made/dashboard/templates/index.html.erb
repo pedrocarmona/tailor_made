@@ -12,7 +12,7 @@
         <thead>
           <tr>
             <% @query.table_columns.each do |column| %>
-              <th><%= column %></th>
+              <th><%= @query.class.sortable(self, @query, column) %></th>
             <% end %>
           </tr>
         </thead>

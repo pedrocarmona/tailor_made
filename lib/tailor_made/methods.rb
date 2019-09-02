@@ -5,6 +5,18 @@ module TailorMade
     end
 
     module ClassMethods
+      def sortable(view_context, query, column)
+        title = column.to_s.titleize
+        css_class = column.to_s == query.sort_column ? "current #{query.sort_direction}" : nil
+        direction = column.to_s == query.sort_column && query.sort_direction == "asc" ? "desc" : "asc"
+        q = query.to_params.merge(
+          sort_column: column,
+          sort_direction: direction
+        )
+        html_tags =  {:class => css_class, data: { turbolinks_action: 'replace' } }
+        view_context.link_to title, {q: q}, html_tags
+      end
+
       def dimension(*attributes)
         dimension = attributes[0]
         return if tailor_made_canonical_dimensions.include?(dimension)
@@ -103,8 +115,10 @@ module TailorMade
         [
           :chart,
           :plot_measure,
+          :sort_column,
+          :sort_direction,
           measures: [],
-          dimensions: []
+          dimensions: [],
         ] +
         tailor_made_datetime_columns.map { |a| "#{a.to_s}_starts_at".to_sym } +
         tailor_made_datetime_columns.map { |a| "#{a.to_s}_ends_at".to_sym } +
