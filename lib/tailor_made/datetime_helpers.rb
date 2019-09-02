@@ -19,19 +19,46 @@ module TailorMade
       scope
     end
 
+    def datetime_dimension_where(scope, dimension, value)
+      dimension_data = datetime_dimension_data[dimension]
+      datetime_dimension = dimension_data[:datetime_dimension]
+      scope.where(datetime_dimension => value..value)
+    end
+
     def build_datetime_dimension_scope(scope, dimension, dimensions)
       starts_at = instance_variable_get("@#{dimension}_starts_at")
       ends_at = instance_variable_get("@#{dimension}_ends_at")
-      permit = tailor_made_measures_datetime_permited[dimension]
 
       if !starts_at.blank? && !ends_at.blank?
-        scope = scope.where(dimension.to_sym => starts_at..ends_at)
+        scope = scope.where(dimension => starts_at..ends_at)
       end
       scope
     end
 
+    def datetime_dimension_data
+      mapping = tailor_made_measures_datetime_permited.map { |datetime_dimension, dimension_periods|
+        dimension_periods.map {|period|
+          [
+            [datetime_dimension.to_s, period.to_s].join("_").to_sym,
+            { datetime_dimension: datetime_dimension, period: period }
+          ]
+        }
+      }.flatten
+      Hash[*mapping]
+    end
+
+
+    def add_datetime_dimension_group(scope, dimension)
+      permitted = tailor_made_measures_datetime_permited[dimension]
+      dimension_data = datetime_dimension_data[dimension]
+      scope.group_by_period(
+        dimension_data[:period],
+        dimension_data[:datetime_dimension],
+        permit: permitted
+      )
+    end
+
     def datetime_dimension_periods(datetime_dimension, dimensions)
-      binding.pry
       dimensions.select { |dimension|
         tailor_made_datetime_dimensions[datetime_dimension].include?(dimension)
       }

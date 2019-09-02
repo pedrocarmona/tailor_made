@@ -79,14 +79,17 @@ module TailorMade
 
     def combination_data(dimensions, combination, view_context)
       scope = from
-      combination.each_with_index.each { |param, index|
-        scope = scope.where("#{dimensions[index + 1]} = ?", param)
+      combination.each_with_index.each { |value, index|
+        if avaliable_datetime_dimensions.include?(dimensions[index+1])
+          scope = datetime_dimension_where(scope, dimensions[index+1], value)
+        else
+          scope = scope.where("#{dimensions[index+1]} = ?", value)
+        end
       }
-      plot_dimension = dimensions[0]
+      plot_dimension = dimensions[1]
       scope = build_scope(scope, [plot_dimension])
-      raw_result = scope.order(
-        { plot_dimension => :asc }
-      ).pluck(
+      plot_order = { plot_dimension => :asc }
+      raw_result = scope.order(plot_order).pluck(
         plot_formulas([plot_dimension], scope)
       )
       comb_dimensions = dimensions.dup
@@ -99,6 +102,7 @@ module TailorMade
         }
       }
     end
+
 
     def all
       @scope = build_scope(from, dimensions)
@@ -149,12 +153,9 @@ module TailorMade
 
       dimensions.each do |dimension|
         if avaliable_datetime_dimensions.include?(dimension)
-          datetime_dimension_periods(dimension, dimensions).each do |datetime_dimension|
-            period_type = get_datetime_dimension_period(dimension, datetime_dimension)
-            scope = scope.group_by_period(period_type, dimension, permit: permit)
-          end
+          scope = add_datetime_dimension_group(scope, dimension)
         else
-          scope = scope.group(dimensions - datetime_dimensions)
+          scope = scope.group(dimension)
         end
       end
       scope
@@ -162,7 +163,7 @@ module TailorMade
 
     def build_canonical_scope(scope)
       self.class.tailor_made_canonical_dimensions.each do |dimension|
-        next if send(dimension).nil?
+        next if send(dimension).blank?
         scope = scope.where(
           ':dimension LIKE :pattern',
           dimension: dimension,
@@ -186,20 +187,20 @@ module TailorMade
 
     # Order and selects
 
-    def order(order)
-      order || @order || { @dimensions.first => :asc }
+    def order(custom_order = nil)
+      custom_order || @order || { @dimensions.first => :asc }
     end
 
     def dimensions_formulas(scope, dimensions)
-      groupdate_indexes = scope.groupdate_values.map(&:group_index)
+      groupdate_indexes = (scope.groupdate_values || []).map(&:group_index)
       aliases = scope.group_values.map.with_index do |group, index|
         if groupdate_indexes.include?(index)
           Arel::Nodes::As.new(
-            Arel.sql(dimensions[index].to_s),
-            Arel.sql(group.to_s)
+            Arel.sql(group.to_s),
+            Arel.sql(dimensions[index].to_s)
           )
         else
-          Arel.sql(group.to_s)
+          scope.arel_table[group]
         end
       end
     end
@@ -220,7 +221,7 @@ module TailorMade
       measures.map { |measure|
         formula = self.class.tailor_made_measure_formula[measure]
         if formula.nil?
-          fail("Tailor Made mesasure #{measure.to_s} formula not set")
+          fail("Tailor Made measure #{measure.to_s} formula not set")
         elsif formula.class <= Arel::Nodes::Node
           formula
         else
