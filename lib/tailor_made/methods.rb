@@ -127,6 +127,10 @@ module TailorMade
 
       end
 
+      def tailor_made_dimensions
+        tailor_made_canonical_dimensions + tailor_made_datetime_dimensions.values().flatten
+      end
+
       def tailor_made_canonical_dimensions
         @tailor_made_canonical_dimensions ||= []
       end

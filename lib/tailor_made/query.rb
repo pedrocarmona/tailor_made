@@ -37,8 +37,7 @@ module TailorMade
 
     def self.column_names
       (tailor_made_measures.compact || []) +
-      (tailor_made_canonical_dimensions.compact || []) +
-      (tailor_made_datetime_dimensions.values().flatten.compact || [])
+      (tailor_made_dimensions.compact || [])
     end
 
     def from
@@ -48,15 +47,15 @@ module TailorMade
     def options_for_select
       @options_for_select ||= begin
         options = {
-          domain: self.class.tailor_made_canonical_dimensions + self.class.tailor_made_datetime_dimensions.values().flatten,
-          dimensions: self.class.tailor_made_canonical_dimensions + self.class.tailor_made_datetime_dimensions.values().flatten,
+          domain: self.class.tailor_made_dimensions,
+          dimensions: self.class.tailor_made_dimensions,
           measures: self.class.tailor_made_measures,
           plot_measure: self.class.tailor_made_measures,
           chart: CHARTS
         }
-        self.class.tailor_made_canonical_domain.each do |field|
+        self.class.tailor_made_canonical_domain.each do |field, proc|
           if self.class.tailor_made_canonical_domain[field]
-            options = options.merge({ field => self.class.tailor_made_canonical_domain[field].call })
+            options = options.merge({ field => proc.call })
           end
         end
         options
