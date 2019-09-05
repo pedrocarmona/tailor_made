@@ -77,40 +77,26 @@ module TailorMade
         }
       }
       return result if dimensions.size < 2
-      result.map { |row| row[1...-1] }.uniq.map { |combination|
+      result.inject({}) { |hash, row|
+        key = row[0..-3]
+        hash[key] = [] if hash[key].nil?
+        hash[key] << [row[-2],row[-1]]
+        hash
+      }.map { |combination, data|
         {
-          name: combination.join("#"),
-          data: combination_data(dimensions, combination, view_context)
+          name: combination_title(columns, combination),
+          data: data.to_h
         }
       }
     end
 
-    def combination_data(dimensions, combination, view_context)
-      scope = from
-      combination.each_with_index.each { |value, index|
-        if avaliable_datetime_dimensions.include?(dimensions[index+1])
-          scope = datetime_dimension_where(scope, dimensions[index+1], value)
-        else
-          scope = scope.where("#{dimensions[index+1]} = ?", value)
-        end
-      }
-      plot_dimension = dimensions[1]
-      scope = build_scope(scope, [plot_dimension])
-      plot_order = { plot_dimension => :asc }
-      raw_result = scope.order(plot_order).pluck(
-        plot_formulas([plot_dimension], scope)
-      )
-      comb_dimensions = dimensions.dup
-      comb_dimensions.pop
-      columns = plot_header(comb_dimensions, scope)
-      result = raw_result.map { |raw_row|
-        row = Struct.new(*columns).new(*raw_row)
-        columns.map { |column|
-          graph_format(row, column) { |l| l.call(view_context, row.send(column)) }
-        }
-      }
+    def combination_title(columns, combination)
+      if combination.size > 1
+        columns[0..-3].map(&:to_s).map(&:titleize).zip(combination).map{|com| com.join(":") }.join("#")
+      else
+        combination
+      end
     end
-
 
     def all
       scope = build_scope(from, dimensions)
@@ -175,13 +161,17 @@ module TailorMade
       scope = build_datetime_dimensions_scope(scope, dimensions)
 
       dimensions.each do |dimension|
-        if avaliable_datetime_dimensions.include?(dimension)
-          scope = add_datetime_dimension_group(scope, dimension)
-        else
-          scope = scope.group(dimension)
-        end
+        scope = build_dimension_scope(scope, dimension)
       end
       scope
+    end
+
+    def build_dimension_scope(scope, dimension)
+      if avaliable_datetime_dimensions.include?(dimension)
+        return add_datetime_dimension_group(scope, dimension)
+      else
+        return scope.group(dimension)
+      end
     end
 
     def build_canonical_scope(scope)
