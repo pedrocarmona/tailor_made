@@ -178,9 +178,13 @@ module TailorMade
       self.class.tailor_made_canonical_dimensions.each do |dimension|
         next if send(dimension).blank?
         scope = scope.where(
-          ':dimension LIKE :pattern',
-          dimension: dimension,
-          pattern: "%#{send(dimension)}%"
+          scope.arel_table[dimension].send(:eq,send(dimension))
+        )
+      end
+      self.class.tailor_made_filters.each do |filter|
+        next if send(filter).blank?
+        scope = scope.where(
+          scope.arel_table[filter].send(:matches, send(filter))
         )
       end
       scope

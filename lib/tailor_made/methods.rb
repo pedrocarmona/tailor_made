@@ -31,7 +31,7 @@ module TailorMade
       def filter(*attributes)
         filter = attributes[0]
         return if tailor_made_filters.include?(filter)
-        TAILOR_MADE_FILTERS << filter
+        tailor_made_filters << filter
 
         attr_accessor filter
         tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
