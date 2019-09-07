@@ -68,12 +68,11 @@ module TailorMade
 
     def plot(view_context)
       scope = build_scope(from, dimensions)
-      raw_result = scope.order(order).pluck(plot_formulas(dimensions, scope))
+      raw_result = scope.order(order).select(plot_formulas(dimensions, scope))
       columns = plot_header(dimensions, scope)
-      result = raw_result.map { |raw_row|
-        row = Struct.new(*columns).new(*raw_row)
+      result = raw_result.map { |row|
         columns.map { |column|
-          graph_format(row, column) { |l| l.call(view_context, row.send(column)) }
+          graph_format(row, column) { |l| l.call(view_context, row, column) }
         }
       }
       return result if dimensions.size < 2

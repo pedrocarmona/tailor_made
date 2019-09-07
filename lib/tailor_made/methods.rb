@@ -81,31 +81,31 @@ module TailorMade
       def datetime_format(period)
         case period
         when :second
-          -> (view_context, time) { time.to_formatted_s(:db) }
+          -> (view_context, row, column) { row.send(column).to_formatted_s(:db) }
         when :minute
-          -> (view_context, time) { time.to_formatted_s(:db) }
+          -> (view_context, row, column) { row.send(column).to_formatted_s(:db) }
         when :hour
-          -> (view_context, time) { time.to_formatted_s(:db) }
+          -> (view_context, row, column) { row.send(column).to_formatted_s(:db) }
         when :day
-          -> (view_context, time) { time.to_date.to_formatted_s(:db) }
+          -> (view_context, row, column) { row.send(column).to_date.to_formatted_s(:db) }
         when :week
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :month
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :quarter
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :year
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :day_of_week
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :hour_of_day
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :minute_of_hour
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :day_of_month
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         when :month_of_year
-          -> (view_context, time) { time }
+          -> (view_context, row, column) { row.send(column) }
         else
           nil
         end
