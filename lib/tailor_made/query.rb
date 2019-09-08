@@ -63,7 +63,13 @@ module TailorMade
     end
 
     def chart
-      @chart ||= :pie_chart
+      return @chart unless @chart.blank?
+      if datetime_dimensions_with_formula.include?(dimensions.last)
+        @chart = :line_chart
+      else
+        @chart = :pie_chart
+      end
+      @chart
     end
 
     def plot(view_context)
@@ -158,7 +164,7 @@ module TailorMade
     end
 
     def build_dimension_scope(scope, dimension)
-      if avaliable_datetime_dimensions.include?(dimension)
+      if datetime_dimensions_with_formula.include?(dimension)
         return add_datetime_dimension_group(scope, dimension)
       else
         return scope.group(dimension)
@@ -245,7 +251,7 @@ module TailorMade
       dimensions.zip(dimensions_formulas(scope, dimensions))
     end
 
-    def avaliable_datetime_dimensions
+    def datetime_dimensions_with_formula
       self.class.tailor_made_datetime_dimensions.values().flatten
     end
 
