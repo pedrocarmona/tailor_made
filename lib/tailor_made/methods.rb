@@ -25,6 +25,7 @@ module TailorMade
         attr_accessor dimension
         tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
         tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
+        tailor_made_canonical_format[dimension] = attributes[1][:format] if attributes[1] && attributes[1][:format]
         tailor_made_canonical_graph_format[dimension] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
       end
 

@@ -119,23 +119,15 @@ module TailorMade
       result || row.send(column)
     end
 
-    def tabelize(row, column)
-      only_column = column.to_s.gsub([self.from.arel_table.name, "_"].join(""), "").to_sym
+    def tabelize(view_context, row, column)
       if !(self.class.tailor_made_canonical_anchors[column].nil?)
-        if self.class.tailor_made_canonical_anchors[column].respond_to? :call
-          lambding = self.class.tailor_made_canonical_anchors[column]
-          result = yield(lambding)
-        else
-          lambding = ->(value) { self.class.tailor_made_canonical_anchors[column][value] }
-          result = yield(lambding)
-        end
+        lambding = self.class.tailor_made_canonical_anchors[column]
+        result = lambding.call(view_context, row, column)
       elsif !(self.class.tailor_made_canonical_format[column].nil?)
         lambding = self.class.tailor_made_canonical_format[column]
-        result = yield(lambding)
-      elsif !(self.class.tailor_made_canonical_format[only_column].nil?)
-        lambding = self.class.tailor_made_canonical_format[only_column]
-        result = yield(lambding)
+        result = lambding.call(view_context, row, column)
       end
+
       result || row.send(column)
     end
 
