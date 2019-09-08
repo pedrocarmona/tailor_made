@@ -167,10 +167,9 @@ module TailorMade
 
     def build_canonical_scope(scope)
       self.class.tailor_made_canonical_dimensions.each do |dimension|
-        next if send(dimension).blank?
-        scope = scope.where(
-          scope.arel_table[dimension].send(:eq,send(dimension))
-        )
+        dimension_values = send(dimension).select{|v| !v.blank? }
+        next if dimension_values.empty?
+        scope = scope.where(dimension => dimension_values)
       end
       self.class.tailor_made_filters.each do |filter|
         next if send(filter).blank?

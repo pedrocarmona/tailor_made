@@ -121,9 +121,9 @@ module TailorMade
           measures: [],
           dimensions: [],
         ] +
-        tailor_made_datetime_columns.map { |a| "#{a.to_s}_starts_at".to_sym } +
-        tailor_made_datetime_columns.map { |a| "#{a.to_s}_ends_at".to_sym } +
-        tailor_made_canonical_dimensions +
+        tailor_made_datetime_columns.map { |col| "#{col.to_s}_starts_at".to_sym } +
+        tailor_made_datetime_columns.map { |col| "#{col.to_s}_ends_at".to_sym } +
+        tailor_made_canonical_dimensions.map { |d| { d => [] } } +
         tailor_made_filters
 
       end
