@@ -51,9 +51,10 @@ module TailorMade
     def add_datetime_dimension_group(scope, dimension)
       permitted = tailor_made_measures_datetime_permited[dimension]
       dimension_data = datetime_dimension_data[dimension]
+      table = arel_table(dimension_data[:datetime_dimension], scope)
       scope.group_by_period(
         dimension_data[:period],
-        dimension_data[:datetime_dimension],
+        table[dimension_data[:datetime_dimension]],
         permit: permitted
       )
     end

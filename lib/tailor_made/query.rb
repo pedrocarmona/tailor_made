@@ -167,13 +167,13 @@ module TailorMade
       if datetime_dimensions_with_formula.include?(dimension)
         return add_datetime_dimension_group(scope, dimension)
       else
-        return scope.group(dimension)
+        return scope.group(arel_table(dimension, scope)[dimension])
       end
     end
 
     def build_canonical_scope(scope)
       self.class.tailor_made_canonical_dimensions.each do |dimension|
-        dimension_values = send(dimension).select{|v| !v.blank? }
+        dimension_values = (send(dimension) || []).select{|v| !v.blank? }
         next if dimension_values.empty?
         scope = scope.where(dimension => dimension_values)
       end
@@ -205,16 +205,27 @@ module TailorMade
       { @sort_column => @sort_direction }
     end
 
+    def arel_table(dimension, scope)
+      table = self.class.tailor_made_table[dimension]
+      if table
+        Arel::Table.new(table)
+      else
+        scope.arel_table
+      end
+    end
+
     def dimensions_formulas(scope, dimensions)
       groupdate_indexes = (scope.groupdate_values || []).map(&:group_index)
       aliases = scope.group_values.map.with_index do |group, index|
         if groupdate_indexes.include?(index)
+          table = arel_table(dimensions[index], scope)
+          table_column = table[dimensions[index]]
           Arel::Nodes::As.new(
             Arel.sql(group.to_s),
-            Arel.sql(dimensions[index].to_s)
+            Arel.sql(table_column.name)
           )
         else
-          scope.arel_table[group]
+          group
         end
       end
     end

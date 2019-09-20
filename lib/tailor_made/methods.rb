@@ -23,6 +23,7 @@ module TailorMade
         tailor_made_canonical_dimensions << dimension
 
         attr_accessor dimension
+        tailor_made_table[dimension] = attributes[1][:table] if attributes[1] && attributes[1][:table]
         tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
         tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
         tailor_made_canonical_format[dimension] = attributes[1][:format] if attributes[1] && attributes[1][:format]
@@ -53,6 +54,9 @@ module TailorMade
         dimension = attributes[0]
         return if tailor_made_datetime_columns.include?(dimension)
         tailor_made_datetime_columns << dimension
+
+        tailor_made_table[dimension] = attributes[1][:table] if attributes[1] && attributes[1][:table]
+
         attr_accessor "#{dimension.to_s}_starts_at".to_sym
         attr_accessor "#{dimension.to_s}_ends_at".to_sym
 
@@ -154,6 +158,10 @@ module TailorMade
 
       def tailor_made_measures
         @tailor_made_measures ||= []
+      end
+
+      def tailor_made_table
+        @tailor_made_table ||= {}
       end
 
       def tailor_made_measure_formula
