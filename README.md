@@ -153,7 +153,11 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/pedroc
 
 ## TODO:
 
-- [ ] fix plot group by (n+1 queries not required).
-- [ ] plot and selectize in different request (caching, etc)
+- [ ] select in different request (caching, etc)
 - [ ] show row with totals (unique dimensions, sum without grouping)
-- [ ] remove monkeypatch groupdate
+- [ ] improve datetime fields display format (missing datetime_format types week month in methods.rb)
+- [ ] ability to compare with previous period side by side
+- [ ] change select js lib to choices.js to be able to sort the order of dimensions
+- [ ] action view component query `_filters` (bootstrap jquery/ bootstrap stimulus/ tailwind stimulus)
+- [ ] to_csv
+- [ ] lots of documentation and examples
