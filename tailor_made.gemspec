@@ -24,10 +24,10 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "railties", ">= 4.2"
-  spec.add_dependency "activerecord", ">= 4.2"
-  spec.add_dependency "pagy", ">= 2.1.2"
-  spec.add_dependency "groupdate", "~> 4.1.1"
+  spec.add_dependency "railties"
+  spec.add_dependency "activerecord"
+  spec.add_dependency "pagy"
+  spec.add_dependency "groupdate"
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 13.0"
