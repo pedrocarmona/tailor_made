@@ -1,3 +1,5 @@
+require "arel"
+
 module TailorMade
   module Methods
     def self.included(base) # :nodoc:
@@ -5,6 +7,27 @@ module TailorMade
     end
 
     module ClassMethods
+      def default_chart(*attributes)
+        define_singleton_method(:default_chart) { attributes.first }
+      end
+
+      def table(*attributes)
+        case attributes.first
+        when Symbol
+          define_singleton_method(:table) { Arel::Table.new(attributes.first) }
+          define_singleton_method(:from) { Arel::Table.new(attributes.first) }
+        when String
+          define_singleton_method(:table) { Arel::Table.new(attributes.first) }
+          define_singleton_method(:from) { Arel::Table.new(attributes.first) }
+        when Arel::Table
+          define_singleton_method(:table) { attributes.first }
+          define_singleton_method(:from) { attributes.first }
+        when Arel::SelectManager
+          define_singleton_method(:table) { Arel::Table.new(:query) }
+          define_singleton_method(:from) { attributes.first.as('query') }
+        end
+      end
+
       def sortable(view_context, query, column)
         title = column.to_s.titleize
         css_class = column.to_s == query.sort_column ? "current #{query.sort_direction}" : nil
@@ -23,11 +46,12 @@ module TailorMade
         tailor_made_canonical_dimensions << dimension
 
         attr_accessor dimension
-        tailor_made_table[dimension] = attributes[1][:table] if attributes[1] && attributes[1][:table]
+        tailor_made_table[dimension] = attributes[1] if attributes[1] && attributes[1][:table]
         tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
         tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
         tailor_made_canonical_format[dimension] = attributes[1][:format] if attributes[1] && attributes[1][:format]
         tailor_made_canonical_graph_format[dimension] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
+        tailor_made_default_dimensions << dimension if attributes[1] && attributes[1][:default]
       end
 
       def filter(*attributes)
@@ -48,6 +72,7 @@ module TailorMade
         tailor_made_measure_formula[measure] = attributes[1][:formula] if attributes[1] && attributes[1][:formula]
         tailor_made_canonical_format[measure] = attributes[1][:format] if attributes[1] && attributes[1][:format]
         tailor_made_canonical_graph_format[measure] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
+        tailor_made_default_measures << measure if attributes[1] && attributes[1][:default]
       end
 
       def datetime_dimension(*attributes)
@@ -72,14 +97,16 @@ module TailorMade
           [dimension, period].join("_").to_sym
         end
 
-        add_datetime_dimension_formats(dimension, permit)
+        default_period = attributes[1][:default] if attributes[1] && attributes[1][:default]
+        add_datetime_dimension_formats(dimension, permit, default_period)
         # groups (day, month, year..)
       end
 
-      def add_datetime_dimension_formats(dimension, permitted)
+      def add_datetime_dimension_formats(dimension, permitted, default_period)
         permitted.each do |period|
           dimension_period = [dimension, period].join("_").to_sym
           tailor_made_canonical_format[dimension_period] = datetime_format(period.to_sym)
+          tailor_made_default_dimensions << dimension_period if period == default_period
         end
       end
 
@@ -152,12 +179,20 @@ module TailorMade
         @tailor_made_canonical_format ||= {}
       end
 
+      def tailor_made_default_dimensions
+        @tailor_made_default_dimensions ||= []
+      end
+
       def tailor_made_canonical_graph_format
         @tailor_made_canonical_graph_format ||= {}
       end
 
       def tailor_made_measures
         @tailor_made_measures ||= []
+      end
+
+      def tailor_made_default_measures
+        @tailor_made_default_measures ||= []
       end
 
       def tailor_made_table

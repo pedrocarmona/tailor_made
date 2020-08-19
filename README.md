@@ -28,23 +28,8 @@ Or install it yourself as:
 
     $ gem install tailor_made
 
-Add pagy in app/helpers/application_helper.rb
-
-```ruby
-module ApplicationHelper
-  include Pagy::Frontend
-```
 
 Two ways:
-
-1. Add assets gems:
-
-```ruby
-# gem "selectize-rails" # and follow its instruction
-# gem "chartkick" # and follow its instruction
-# gem "flatpickr" # include also rangePlugin
-```
-Then you need to add statments to application.scss.
 
 Otherwise:
 
@@ -161,3 +146,41 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/pedroc
 - [ ] action view component query `_filters` (bootstrap jquery/ bootstrap stimulus/ tailwind stimulus)
 - [ ] to_csv
 - [ ] lots of documentation and examples
+
+
+
+## New version
+
+
+
+Goal:
+- Use attributes
+- Break it apart into testable methods
+- Still have dimentsions and measures
+- Split Entity from Model Query
+  - Entity should hold the results (dimentions and measures)
+  - Model Query implements the query that is executed in the database
+-
+
+
+dimensions; group by
+measures: calculations
+
+
+class Ahoy::VisitReport
+
+
+  def from
+
+  end
+end
+
+In rails we have the entity and the model joined
+
+But when we supply params
+
+
+A.group(dimensions).select(dimensions + measures)
+
+
+-

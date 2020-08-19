@@ -1,6 +1,9 @@
+require "active_model"
+
 module TailorMade
   class Query
     include ActiveModel::Model
+    include ::TailorMade::Methods
     include ::TailorMade::DatetimeHelpers
 
     attr_accessor :measures
@@ -13,7 +16,7 @@ module TailorMade
     attr_reader :sort_column
     attr_reader :sort_direction
 
-    CHARTS = [
+    DEFAULT_CHARTS = [
       :pie_chart,
       :line_chart,
       :column_chart,
@@ -35,13 +38,18 @@ module TailorMade
       set_datetime_ranges
     end
 
+    def default_dimensions
+      self.class.tailor_made_default_dimensions
+    end
+
+    def default_measures
+      self.class.tailor_made_default_measures
+    end
+
+
     def self.column_names
       (tailor_made_measures.compact || []) +
       (tailor_made_dimensions.compact || [])
-    end
-
-    def from
-      fail(NotImplementedError) # required to implement in subclass
     end
 
     def options_for_select
