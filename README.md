@@ -81,43 +81,41 @@ Then you can add the following statements to your query `rails_root/app/queries/
 
 ```ruby
   module TailorMade
-    class Ahoy::VisitQuery < TailorMade::Query
-      # creates attr_accessors for dimensions, measures and filters
-      include TailorMade::Methods
+    class VisitsQuery < TailorMade::Query
+      table :ahoy_visits
 
-      datetime_dimension :started_at, permit: [:day, :day_of_week, :day_of_month, :week, :month_of_year]
-      dimension(
-        :device_type,
-        domain: -> { Ahoy::Visits.all.pluck("DISTINCT device_type") }
-      )
+      datetime_dimension :started_at,
+                         permit: [:day, :day_of_week, :day_of_month, :week, :month_of_year],
+                         default: {
+                            day: {
+                              starts_at: -> { Date.today.beginning_of_month }
+                              ends_at:   -> { Date.today }
+                            }
+                         }
+      dimension :device_type,
+                default: true,
+                domain: -> { table[:device_type].distinct }
       dimension :referring_domain
       dimension :utm_campaign
       dimension :utm_content
       dimension :utm_medium
       dimension :utm_source
       dimension :utm_term
-      measure :users_count, formula: "COUNT(user_id)"
-      measure :visits_count, formula: "COUNT(id)"
-
-      def default_dimensions
-        [:device_type]
-      end
-
-      def default_measures
-        [:visits_count, :users_count]
-      end
-
-      def initialize(attributes={})
-        super
-        @started_at_starts_at ||= Date.today.beginning_of_month
-        @started_at_ends_at   ||= Date.today
-      end
-
-      def from
-        ::Ahoy::Visit.all
-      end
+      measure :users_count, formula: "COUNT(user_id)", default: true
+      measure :visits_count, formula: "COUNT(id)", default: true
     end
   end
+
+  > VisitsQuery.new.all
+
+  # include totals
+  > VisitsQuery.new.totals
+
+  # include plot
+  > VisitsQuery.new.plot(:users_count, format: :x)
+
+  # include table
+  > VisitsQuery.new.table(:users_count, format: :x)
 ```
 
 Visit `http://localhost:3000/tailor_made/ahoy/visits`.
@@ -184,3 +182,41 @@ A.group(dimensions).select(dimensions + measures)
 
 
 -
+
+Goals of new version
+
+Separate logic from query, table, and chart from query class into:
+
+query
+- allows to query the database
+  - pass filters
+  - decide measures
+  - decide dimensions
+  idea: create a tableless model, that can be joined into, and translatable to arel (from method)
+
+table
+- ability to tabelize a query
+- format the fields
+- format the columns rendered
+- format the values rendered
+
+char
+- ability to plot a query
+- pick a plot dimension
+- format the columns rendered
+- format the values rendered
+
+
+
+Split goal of simple query into lib, and provide a rails engine that users can include if they want to build dashboards and tables fast.
+
+rails engines dashboards webpacker and stimulus reflex.
+
+ideia for caching: expose an updated at which relies on the max updated at of the relation :P
+
+2      , 2       , 10
+group a, group b, count
+1,       , 1      ,1
+1,       , 2      ,2
+2,       , 1      ,3
+2,       , 2      ,4

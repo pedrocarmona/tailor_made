@@ -8,17 +8,32 @@ module TailorMade
 
     attr_accessor :measures
     attr_accessor :dimensions
+    attr_accessor :plot_measure
+    attr_accessor :chart
     attr_accessor :sort_column
     attr_accessor :sort_direction
     attr_reader :options_for_select
     attr_reader :sort_column
     attr_reader :sort_direction
 
+    DEFAULT_CHARTS = [
+      :pie_chart,
+      :line_chart,
+      :column_chart,
+      :bar_chart,
+      :area_chart,
+      :scatter_chart,
+      :geo_chart,
+      :timeline,
+    ]
+
     def initialize(attributes={})
+      binding.pry
       @dimensions     ||= default_dimensions
       @dimensions       = @dimensions.reject(&:blank?).map(&:to_sym)
       @measures       ||= default_measures
       @measures         = @measures.reject(&:blank?).map(&:to_sym)
+      @plot_measure   ||= default_plot_measure
 
       set_datetime_ranges
     end
@@ -32,6 +47,7 @@ module TailorMade
       self.class.tailor_made_default_measures
     end
 
+
     def self.column_names
       (tailor_made_measures.compact || []) +
       (tailor_made_dimensions.compact || [])
@@ -42,7 +58,9 @@ module TailorMade
         options = {
           domain: self.class.tailor_made_dimensions,
           dimensions: self.class.tailor_made_dimensions,
-          measures: self.class.tailor_made_measures
+          measures: self.class.tailor_made_measures,
+          plot_measure: self.class.tailor_made_measures,
+          chart: CHARTS
         }
         self.class.tailor_made_canonical_domain.each do |field, proc|
           if self.class.tailor_made_canonical_domain[field]
@@ -53,15 +71,85 @@ module TailorMade
       end
     end
 
+    def chart
+      return @chart unless @chart.blank?
+      if datetime_dimensions_with_formula.include?(dimensions.last)
+        @chart = :line_chart
+      else
+        @chart = :pie_chart
+      end
+      @chart
+    end
 
-    def all # return into a record
+    def plot(view_context)
+      scope = build_scope(from, dimensions)
+      raw_result = scope.order(order).select(plot_formulas(dimensions, scope))
+      columns = plot_header(dimensions, scope)
+      result = raw_result.map { |row|
+        columns.map { |column|
+          graph_format(row, column) { |l| l.call(view_context, row, column) }
+        }
+      }
+      return result if dimensions.size < 2
+      result.inject({}) { |hash, row|
+        key = row[0..-3]
+        hash[key] = [] if hash[key].nil?
+        hash[key] << [row[-2],row[-1]]
+        hash
+      }.map { |combination, data|
+        {
+          name: combination_title(columns, combination),
+          data: data.to_h
+        }
+      }
+    end
+
+    def combination_title(columns, combination)
+      if combination.size > 1
+        columns[0..-3].map(&:to_s).map(&:titleize).zip(combination).map{|com| com.join(":") }.join("#")
+      else
+        combination
+      end
+    end
+
+    def all
       scope = build_scope(from, dimensions)
       scope = scope.order(order)
       scope.select(table_formulas(scope))
     end
 
+    def table_columns
+      dimensions + measures
+    end
+
+    def graph_format(row, column)
+      only_column = column.to_s.gsub([self.from.arel_table.name, "_"].join(""), "").to_sym
+      if !(self.class.tailor_made_canonical_graph_format[column].nil?)
+        lambding = self.class.tailor_made_canonical_graph_format[column]
+        result = yield(lambding)
+      elsif !(self.class.tailor_made_canonical_graph_format[only_column].nil?)
+        lambding = self.class.tailor_made_canonical_graph_format[only_column]
+        result = yield(lambding)
+      end
+      result || row.send(column)
+    end
+
+    def tabelize(view_context, row, column)
+      if !(self.class.tailor_made_canonical_anchors[column].nil?)
+        lambding = self.class.tailor_made_canonical_anchors[column]
+        result = lambding.call(view_context, row, column)
+      elsif !(self.class.tailor_made_canonical_format[column].nil?)
+        lambding = self.class.tailor_made_canonical_format[column]
+        result = lambding.call(view_context, row, column)
+      end
+
+      result || row.send(column)
+    end
+
     def to_params
       array = [
+          :chart,
+          :plot_measure,
           :measures,
           :dimensions
         ] +
@@ -149,6 +237,14 @@ module TailorMade
           group
         end
       end
+    end
+
+    def plot_header(dimensions, scope)
+      dimensions + [plot_measure.to_sym]
+    end
+
+    def plot_formulas(dimensions, scope)
+      (dimensions_formulas(scope, dimensions) + measure_formulas([plot_measure.to_sym]))
     end
 
     def table_formulas(scope)

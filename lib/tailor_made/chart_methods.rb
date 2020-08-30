@@ -1,12 +1,12 @@
 require "arel"
 
 module TailorMade
-  module Methods
+  module QueryMethods
     def self.included(base) # :nodoc:
-      base.extend ClassMethods
+      base.extend QueryClassMethods
     end
 
-    module ClassMethods
+    module QueryClassMethods
       def default_chart(*attributes)
         define_singleton_method(:default_chart) { attributes.first }
       end
@@ -46,11 +46,10 @@ module TailorMade
         tailor_made_canonical_dimensions << dimension
 
         attr_accessor dimension
-        tailor_made_table[dimension] = attributes[1] if attributes[1] && attributes[1][:table]
         tailor_made_canonical_domain[dimension] = attributes[1][:domain] if attributes[1] && attributes[1][:domain]
         tailor_made_canonical_anchors[dimension] = attributes[1][:anchor] if attributes[1] && attributes[1][:anchor]
         tailor_made_canonical_format[dimension] = attributes[1][:format] if attributes[1] && attributes[1][:format]
-        tailor_made_canonical_graph_format[dimension] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
+        tailor_made_canonical_plot_format[dimension] = attributes[1][:plot_format] if attributes[1] && attributes[1][:plot_format]
         tailor_made_default_dimensions << dimension if attributes[1] && attributes[1][:default]
       end
 
@@ -71,8 +70,9 @@ module TailorMade
 
         tailor_made_measure_formula[measure] = attributes[1][:formula] if attributes[1] && attributes[1][:formula]
         tailor_made_canonical_format[measure] = attributes[1][:format] if attributes[1] && attributes[1][:format]
-        tailor_made_canonical_graph_format[measure] = attributes[1][:graph_format] if attributes[1] && attributes[1][:graph_format]
+        tailor_made_canonical_plot_format[measure] = attributes[1][:plot_format] if attributes[1] && attributes[1][:plot_format]
         tailor_made_default_measures << measure if attributes[1] && attributes[1][:default]
+        tailor_made_default_plot_measures << measure if attributes[1] && attributes[1][:plot]
       end
 
       def datetime_dimension(*attributes)
@@ -183,8 +183,8 @@ module TailorMade
         @tailor_made_default_dimensions ||= []
       end
 
-      def tailor_made_canonical_graph_format
-        @tailor_made_canonical_graph_format ||= {}
+      def tailor_made_canonical_plot_format
+        @tailor_made_canonical_plot_format ||= {}
       end
 
       def tailor_made_measures
@@ -193,6 +193,10 @@ module TailorMade
 
       def tailor_made_default_measures
         @tailor_made_default_measures ||= []
+      end
+
+      def tailor_made_default_plot_measures
+        @tailor_made_default_plot_measures ||= []
       end
 
       def tailor_made_table
